@@ -1,0 +1,6 @@
+pandas
+streamlit
+pmdarima
+psycopg2-binary
+statsmodels
+python-dotenv
