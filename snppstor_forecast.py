@@ -9,6 +9,7 @@ import os
 # Load the environment variables from .env file
 load_dotenv()
 
+
 def get_data():
     """
     Connects to a PostgreSQL database and retrieves data from the 'Order' table.
@@ -16,8 +17,7 @@ def get_data():
     Returns:
         DataFrame: The data retrieved from the database.
     """
-    db_params = {
-       "host": os.getenv("DB_HOST"),
+    db_params = {"host": os.getenv("DB_HOST"),
         "port": os.getenv("DB_PORT"),
         "database": os.getenv("DB_NAME"),
         "user": os.getenv("DB_USER"),
@@ -38,7 +38,9 @@ def get_data():
         if connection:
             connection.close()
             print("PostgreSQL connection is closed")
+    
     return df
+
 
 def preprocess_data(df, vendor_id):
     """
@@ -51,16 +53,19 @@ def preprocess_data(df, vendor_id):
     Returns:
         DataFrame: Processed data ready for time series analysis.
     """
-    if vendor_id != '274':
-        df = df[df['vendorId'] == vendor_id]
+    if vendor_id != "274":
+        df = df[df["vendorId"] == vendor_id]
 
-    df_processed = df.rename(columns={"createdAt": "date", "FinalPrice": "price", "vendorId": "vendor_id"})
-    df_processed['date'] = pd.to_datetime(df_processed['date'])
-    df_processed['price'] = df_processed['price'].fillna(0).astype(int)
-    df_processed = df_processed.set_index('date').resample('D').sum()
+    df_processed = df.rename(
+        columns={"createdAt": "date", "FinalPrice": "price", "vendorId": "vendor_id"}
+    )
+    df_processed["date"] = pd.to_datetime(df_processed["date"])
+    df_processed["price"] = df_processed["price"].fillna(0).astype(int)
+    df_processed = df_processed.set_index("date").resample("D").sum()
     df_processed = df_processed[:-1]
 
     return df_processed
+
 
 def fit_sarimax(df):
     """
@@ -73,18 +78,28 @@ def fit_sarimax(df):
         SARIMAXResults: The fitted SARIMAX model.
     """
     try:
-        auto_model = auto_arima(df['price'], seasonal=True, m=7, 
-                                trace=True, error_action='ignore', 
-                                suppress_warnings=True, stepwise=True)
+        auto_model = auto_arima(
+            df["price"],
+            seasonal=True,
+            m=7,
+            trace=True,
+            error_action="ignore",
+            suppress_warnings=True,
+            stepwise=True,
+        )
         best_order = auto_model.order
         best_seasonal_order = auto_model.seasonal_order
 
-        model = SARIMAX(df['price'], order=best_order, seasonal_order=best_seasonal_order)
+        model = SARIMAX(
+            df["price"], order=best_order, seasonal_order=best_seasonal_order
+        )
         results = model.fit(disp=False)
     except Exception as e:
         print(f"Model fitting error: {e}")
         return None
+    
     return results
+
 
 def predict_next_period_sales(df, steps, period_name):
     """
@@ -108,24 +123,35 @@ def predict_next_period_sales(df, steps, period_name):
         print("Model fitting was unsuccessful.")
         return None, None
 
+
 def run_streamlit_app():
     st.title("Vendor Sales Forecast")
-    vendor_id = st.text_input("Enter VendorId:", '274')
-
+    
+    st.info("Syncing with database...")
     df = get_data()
+    st.info("Synced!")
+
+    vendor_id = st.text_input("Enter VendorId:", "274")
     if not df.empty:
         df_processed = preprocess_data(df, vendor_id)
 
         if st.button("Forecast Sales"):
             with st.spinner("Calculating forecasts..."):
-                next_week_forecast, total_week_sales = predict_next_period_sales(df_processed, steps=7, period_name='week')
+                next_week_forecast, total_week_sales = predict_next_period_sales(
+                    df_processed, steps=7, period_name="week"
+                )
 
                 if next_week_forecast is not None:
-                    st.write(f"Total forecasted sales for the upcoming week: {total_week_sales:,.2f}")
+                    st.write(
+                        f"Total forecasted sales for the upcoming week: {total_week_sales:,.2f}"
+                    )
                     st.write("Forecasted sales by day for the upcoming week:")
-                    st.write(next_week_forecast.to_frame(name='Sales'))
+                    st.write(next_week_forecast.to_frame(name="Sales"))
                 else:
-                    st.error("Forecasting was unsuccessful. Please check the data or model parameters.")
+                    st.error(
+                        "Forecasting was unsuccessful. Please check the data or model parameters."
+                    )
+
 
 if __name__ == "__main__":
     run_streamlit_app()
