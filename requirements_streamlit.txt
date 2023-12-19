@@ -1,8 +1,7 @@
 pandas
+streamlit
 pmdarima
 psycopg2-binary
 statsmodels
 python-dotenv
 sqlalchemy
-uvicorn
-fastapi

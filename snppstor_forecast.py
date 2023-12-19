@@ -2,7 +2,6 @@ import pandas as pd
 import streamlit as st
 from pmdarima import auto_arima
 from statsmodels.tsa.statespace.sarimax import SARIMAX
-# import psycopg2
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 import os
@@ -26,21 +25,6 @@ def get_data():
         "password": os.getenv("DB_PASSWORD")
     }
 
-    # connection = None
-
-    # try:
-    #     connection = psycopg2.connect(**db_params)
-    #     query = """SELECT "Order"."createdAt", "Order"."FinalPrice", "Order"."vendorId" 
-    #                FROM "Order";"""
-    #     df = pd.read_sql(query, connection)
-    # except (Exception, psycopg2.Error) as error:
-    #     print("Error while connecting to PostgreSQL:", error)
-    #     return pd.DataFrame()  # Returns an empty DataFrame in case of error
-    # finally:
-    #     if connection:
-    #         connection.close()
-    #         print("PostgreSQL connection is closed")
-    
     # Constructing the connection string
     connection_string = f"postgresql://{db_params['user']}:{db_params['password']}@{db_params['host']}:{db_params['port']}/{db_params['database']}"
     
