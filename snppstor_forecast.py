@@ -151,10 +151,12 @@ def run_streamlit_app():
     st.info("Synced!")
 
     vendor_id = st.text_input("Enter VendorId:", "274")
+    forecast_button = st.button("Forecast now")
+
     if not df.empty:
         df_processed = preprocess_data(df, vendor_id)
 
-        if st.button("Forecast Sales"):
+        if forecast_button:
             with st.spinner("Calculating forecasts..."):
                 next_week_forecast, total_week_sales = predict_next_period_sales(
                     df_processed, steps=7, period_name="week"
